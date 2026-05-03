@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    ports:
+      - "5001:5000"
+    environment:
+      - FLASK_ENV=development
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3

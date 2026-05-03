@@ -1,0 +1,36 @@
+rules:
+  - id: hardcoded-secret-variable
+    patterns:
+      - pattern: $VAR = "$VALUE"
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i).*(SECRET|PASSWORD|API_KEY|TOKEN).*
+    message: >
+      Hardcoded secret assigned to $VAR. Move to environment variable or secrets manager.
+    languages: [python]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+
+  - id: sql-injection-fstring-execute
+    pattern: $OBJ.execute(f"...")
+    message: >
+      SQL query built with f-string passed to .execute() — unsanitized input leads to SQL injection.
+      Use parameterized queries: conn.execute("SELECT ... WHERE x = ?", (value,))
+    languages: [python]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-89: SQL Injection"
+
+  - id: flask-debug-true
+    pattern: $APP.run(..., debug=True, ...)
+    message: >
+      Flask app started with debug=True. Exposes interactive debugger and disables production safeguards.
+      Set via environment variable: FLASK_DEBUG=0
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: security
+      cwe: "CWE-94: Improper Control of Generation of Code"

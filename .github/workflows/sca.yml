@@ -1,0 +1,44 @@
+name: SCA — Trivy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  trivy:
+    name: Trivy SCA + Container Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t devsecops-demo:${{ github.sha }} .
+
+      - name: Scan filesystem (dependencies)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: app/
+          format: json
+          output: reports/trivy-fs.json
+          severity: MEDIUM,HIGH,CRITICAL
+          exit-code: "0"
+
+      - name: Scan container image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: devsecops-demo:${{ github.sha }}
+          format: json
+          output: reports/trivy-image.json
+          severity: MEDIUM,HIGH,CRITICAL
+          exit-code: "0"
+
+      - name: Upload findings to DefectDojo
+        if: always()
+        run: bash scripts/upload-to-defectdojo.sh trivy reports/trivy-fs.json
+        env:
+          DEFECTDOJO_URL: ${{ secrets.DEFECTDOJO_URL }}
+          DEFECTDOJO_API_KEY: ${{ secrets.DEFECTDOJO_API_KEY }}
+          DEFECTDOJO_ENGAGEMENT_ID: ${{ secrets.DEFECTDOJO_ENGAGEMENT_ID }}
