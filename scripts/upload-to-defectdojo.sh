@@ -19,9 +19,11 @@ fi
 
 # Map scanner name → DefectDojo scan_type string
 case "$SCANNER" in
-  semgrep)  SCAN_TYPE="SARIF" ;;
-  trivy)    SCAN_TYPE="Trivy Scan" ;;
-  zap)      SCAN_TYPE="ZAP Scan" ;;
+  semgrep)           SCAN_TYPE="SARIF" ;;
+  trivy)             SCAN_TYPE="Trivy Scan" ;;
+  zap)               SCAN_TYPE="ZAP Scan" ;;
+  gitleaks)          SCAN_TYPE="Gitleaks Scan" ;;
+  dependency-check)  SCAN_TYPE="Dependency Check Scan" ;;
   *)
     echo "ERROR: unknown scanner '$SCANNER'. Add it to the case block." >&2
     exit 1
