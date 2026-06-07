@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   trivy:
     name: Trivy SCA + Container Scan
@@ -13,11 +16,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create reports directory
+        run: mkdir -p reports
+
       - name: Build Docker image
         run: docker build -t devsecops-demo:${{ github.sha }} .
 
       - name: Scan filesystem (dependencies)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         with:
           scan-type: fs
           scan-ref: app/
@@ -27,7 +33,7 @@ jobs:
           exit-code: "1"
 
       - name: Scan container image
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         if: always()
         with:
           image-ref: devsecops-demo:${{ github.sha }}
@@ -43,8 +49,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create reports directory
+        run: mkdir -p reports
+
       - name: Run OWASP Dependency-Check
-        uses: dependency-check/Dependency-Check_Action@main
+        uses: dependency-check/Dependency-Check_Action@v3.1.0
         with:
           project: devsecops-demo
           path: app/
@@ -53,7 +62,7 @@ jobs:
           args: >
             --failOnCVSS 7
             --enableRetired
-            --nvdApiKey ${{ secrets.NVD_API_KEY }}
+            ${{ secrets.NVD_API_KEY != '' && format('--nvdApiKey {0}', secrets.NVD_API_KEY) || '' }}
 
       - name: Upload HTML report as artifact
         uses: actions/upload-artifact@v4

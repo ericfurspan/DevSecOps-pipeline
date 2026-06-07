@@ -8,11 +8,12 @@ A reference CI/CD security pipeline demonstrating automated vulnerability scanni
 |---|---|
 | `app/app.py` | The scan target — a deliberately vulnerable Flask app with SQLi, hardcoded secrets, and debug mode enabled |
 | `app/requirements.txt` | Python dependencies; `requests==2.28.0` is intentionally pinned to a vulnerable version to trigger SCA scanners |
+| `app/openapi.yaml` | OpenAPI 3.0 spec for the demo app — used by the ZAP API scan to enumerate endpoints |
 | `.semgrep/custom-rules.yml` | Three custom Semgrep rules that match the exact vulnerabilities in `app.py` |
 | `.github/workflows/sast.yml` | CI workflow: runs Semgrep SAST, uploads SARIF to GitHub Security |
 | `.github/workflows/secrets.yml` | CI workflow: runs Gitleaks across the full git history to catch secrets ever committed |
 | `.github/workflows/sca.yml` | CI workflow: runs Trivy (deps + container image) and OWASP Dependency-Check in parallel |
-| `.github/workflows/dast.yml` | CI workflow: starts the app in Docker, runs OWASP ZAP API scan against it |
+| `.github/workflows/dast.yml` | CI workflow: starts the app in Docker, runs OWASP ZAP API scan against it — weekly schedule + manual dispatch |
 | `Dockerfile` | Builds the demo app container image from `python:3.11-slim` |
 | `docker-compose.yml` | Runs the app locally; maps host port 5001 → container port 5000 |
 | `Makefile` | Local dev shortcuts (`make run`, `make sast`, etc.) — not used by CI |
@@ -22,14 +23,15 @@ A reference CI/CD security pipeline demonstrating automated vulnerability scanni
 
 ## Pipeline Overview
 
-| Workflow | Tool | What it scans | Blocks on |
-|---|---|---|---|
-| `sast.yml` | Semgrep | Source code (SAST) | Any finding from configured rules |
-| `secrets.yml` | Gitleaks | Git history + staged changes | Any secret found in repo history |
-| `sca.yml` (job: trivy) | Trivy | Python deps + Docker image | HIGH or CRITICAL CVE |
-| `sca.yml` (job: dependency-check) | OWASP Dependency-Check | Python deps (NVD database) | CVSS score ≥ 7.0 |
+| Workflow | Tool | What it scans | Blocks on | Trigger |
+|---|---|---|---|---|
+| `sast.yml` | Semgrep | Source code (SAST) | Any finding from configured rules | push to `main`, PRs |
+| `secrets.yml` | Gitleaks | Git history + staged changes | Any secret found in repo history | push to `main`, PRs |
+| `sca.yml` (job: trivy) | Trivy | Python deps + Docker image | HIGH or CRITICAL CVE | push to `main`, PRs |
+| `sca.yml` (job: dependency-check) | OWASP Dependency-Check | Python deps (NVD database) | CVSS score ≥ 7.0 | push to `main`, PRs |
+| `dast.yml` | OWASP ZAP | Running app (HTTP) | Any high-severity finding | Weekly (Sundays), manual |
 
-All workflows trigger on push to `main` and on pull requests.
+SAST, secret scanning, and SCA run on every push to `main` and on pull requests. DAST runs on a weekly schedule and on-demand via `workflow_dispatch` — it requires a live app and is too slow and environment-dependent to gate every commit.
 
 ---
 
@@ -71,6 +73,13 @@ A complementary SCA tool that cross-references dependencies against the NVD, usi
 Fails the job when any dependency has a CVSS score ≥ 7.0. Outputs HTML and XML reports. The HTML report is retained as a GitHub Actions artifact for 30 days.
 
 `NVD_API_KEY` is optional but strongly recommended — without it, NVD rate-limits the database download and the scan can take 30+ minutes.
+
+### OWASP ZAP (DAST)
+Dynamic application security testing — scans the running app over HTTP rather than analyzing source code. Catches runtime vulnerabilities that static analysis misses: active SQL injection, reflected XSS, missing security headers, and insecure server configuration.
+
+The workflow starts the app via `docker compose`, waits for the `/health` endpoint to respond, then runs ZAP's API scan mode against [`app/openapi.yaml`](app/openapi.yaml). The spec enumerates all endpoints and parameters, giving ZAP precise targets rather than relying on crawling.
+
+DAST is intentionally not triggered on every push — it requires a running environment and takes several minutes. A weekly scheduled run plus `workflow_dispatch` for on-demand scans is the right cadence for a pre-production-style gate.
 
 ---
 
@@ -114,7 +123,7 @@ See the [Makefile](Makefile) for all available targets.
 [`app/app.py`](app/app.py) is intentionally vulnerable. It exists to demonstrate that each scanner fires on real findings:
 
 - **Hardcoded secrets** → triggers Semgrep `hardcoded-secret-variable` + Gitleaks
-- **SQL injection via f-string** → triggers Semgrep `sql-injection-fstring-execute`
+- **SQL injection via f-string** → triggers Semgrep `sql-injection-fstring-execute` (static) + ZAP active scan (runtime)
 - **`debug=True`** → triggers Semgrep `flask-debug-true`
 - **`requests==2.28.0`** (CVE-2023-32681) → triggers Trivy + OWASP Dependency-Check
 

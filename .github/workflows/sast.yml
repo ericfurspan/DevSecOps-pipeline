@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   semgrep:
     name: Semgrep SAST Scan
@@ -13,21 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Run Semgrep
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: >-
-            p/python
-            p/secrets
-            p/owasp-top-ten
-            .semgrep/custom-rules.yml
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+      - name: Install Semgrep
+        run: pip install semgrep
 
-      - name: Export findings (SARIF)
-        if: always()
+      - name: Run Semgrep
         run: |
-          pip install semgrep
+          mkdir -p reports
           semgrep scan \
             --config p/python \
             --config p/secrets \
@@ -36,7 +31,8 @@ jobs:
             --sarif \
             --output reports/semgrep.sarif \
             app/
-        continue-on-error: true
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
       - name: Upload SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v3

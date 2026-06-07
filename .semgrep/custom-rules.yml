@@ -33,4 +33,4 @@ rules:
     severity: WARNING
     metadata:
       category: security
-      cwe: "CWE-94: Improper Control of Generation of Code"
+      cwe: "CWE-215: Insertion of Sensitive Information Into Debugging Code"

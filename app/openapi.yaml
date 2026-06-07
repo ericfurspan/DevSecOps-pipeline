@@ -1,0 +1,39 @@
+openapi: "3.0.0"
+info:
+  title: DevSecOps Demo API
+  version: "1.0.0"
+servers:
+  - url: http://localhost:5001
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+  /user:
+    get:
+      summary: Get user by name (intentionally vulnerable to SQLi)
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+          example: alice
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad request
+  /safe-user:
+    get:
+      summary: Get user by name (parameterized query — safe reference)
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+          example: alice
+      responses:
+        "200":
+          description: OK
