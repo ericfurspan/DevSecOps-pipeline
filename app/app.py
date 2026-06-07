@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 # [VULN] Hardcoded secret — intentional for SAST/secret-scanning demo
 SECRET_API_KEY = "super-secret-key-abc123-do-not-commit"
-DB_PASSWORD = "hunter2"
+DB_PASSWORD = "password123"
 
 DATABASE = ":memory:"
 

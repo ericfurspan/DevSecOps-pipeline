@@ -36,14 +36,6 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "1"
 
-      - name: Upload findings to DefectDojo
-        if: always()
-        run: bash scripts/upload-to-defectdojo.sh trivy reports/trivy-fs.json
-        env:
-          DEFECTDOJO_URL: ${{ secrets.DEFECTDOJO_URL }}
-          DEFECTDOJO_API_KEY: ${{ secrets.DEFECTDOJO_API_KEY }}
-          DEFECTDOJO_ENGAGEMENT_ID: ${{ secrets.DEFECTDOJO_ENGAGEMENT_ID }}
-
   dependency-check:
     name: OWASP Dependency-Check
     runs-on: ubuntu-latest
@@ -70,11 +62,3 @@ jobs:
           name: dependency-check-report
           path: reports/dependency-check-report.html
           retention-days: 30
-
-      - name: Upload findings to DefectDojo
-        if: always()
-        run: bash scripts/upload-to-defectdojo.sh dependency-check reports/dependency-check-report.xml
-        env:
-          DEFECTDOJO_URL: ${{ secrets.DEFECTDOJO_URL }}
-          DEFECTDOJO_API_KEY: ${{ secrets.DEFECTDOJO_API_KEY }}
-          DEFECTDOJO_ENGAGEMENT_ID: ${{ secrets.DEFECTDOJO_ENGAGEMENT_ID }}

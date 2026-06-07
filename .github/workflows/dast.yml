@@ -40,14 +40,6 @@ jobs:
           name: zap-report
           path: reports/zap-report.html
 
-      - name: Upload findings to DefectDojo
-        if: always()
-        run: bash scripts/upload-to-defectdojo.sh zap reports/zap-report.json
-        env:
-          DEFECTDOJO_URL: ${{ secrets.DEFECTDOJO_URL }}
-          DEFECTDOJO_API_KEY: ${{ secrets.DEFECTDOJO_API_KEY }}
-          DEFECTDOJO_ENGAGEMENT_ID: ${{ secrets.DEFECTDOJO_ENGAGEMENT_ID }}
-
       - name: Tear down app
         if: always()
         run: docker compose down

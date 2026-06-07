@@ -2,6 +2,24 @@
 
 A reference CI/CD security pipeline demonstrating automated vulnerability scanning at every layer of the software supply chain. Uses a deliberately vulnerable Flask app as the scan target.
 
+## Project Structure
+
+| File | Purpose |
+|---|---|
+| `app/app.py` | The scan target — a deliberately vulnerable Flask app with SQLi, hardcoded secrets, and debug mode enabled |
+| `app/requirements.txt` | Python dependencies; `requests==2.28.0` is intentionally pinned to a vulnerable version to trigger SCA scanners |
+| `.semgrep/custom-rules.yml` | Three custom Semgrep rules that match the exact vulnerabilities in `app.py` |
+| `.github/workflows/sast.yml` | CI workflow: runs Semgrep SAST, uploads SARIF to GitHub Security |
+| `.github/workflows/secrets.yml` | CI workflow: runs Gitleaks across the full git history to catch secrets ever committed |
+| `.github/workflows/sca.yml` | CI workflow: runs Trivy (deps + container image) and OWASP Dependency-Check in parallel |
+| `.github/workflows/dast.yml` | CI workflow: starts the app in Docker, runs OWASP ZAP API scan against it |
+| `Dockerfile` | Builds the demo app container image from `python:3.11-slim` |
+| `docker-compose.yml` | Runs the app locally; maps host port 5001 → container port 5000 |
+| `Makefile` | Local dev shortcuts (`make run`, `make sast`, etc.) — not used by CI |
+| `docs/pipeline.md` | Original pipeline notes from initial scaffold; superseded by this README |
+
+---
+
 ## Pipeline Overview
 
 | Workflow | Tool | What it scans | Blocks on |
@@ -50,7 +68,7 @@ The image scan catches vulnerabilities that come from the base image (e.g., `pyt
 ### OWASP Dependency-Check (SCA — NVD deep scan)
 A complementary SCA tool that cross-references dependencies against the NVD, using CPE matching and additional heuristics. Runs alongside Trivy because the two tools use different matching strategies and catch different CVE subsets.
 
-Fails the job when any dependency has a CVSS score ≥ 7.0. Outputs HTML (human-readable) and XML (for DefectDojo) reports. The HTML report is retained as a GitHub Actions artifact for 30 days.
+Fails the job when any dependency has a CVSS score ≥ 7.0. Outputs HTML and XML reports. The HTML report is retained as a GitHub Actions artifact for 30 days.
 
 `NVD_API_KEY` is optional but strongly recommended — without it, NVD rate-limits the database download and the scan can take 30+ minutes.
 
@@ -65,9 +83,6 @@ Configure these in **GitHub → Settings → Secrets and variables → Actions**
 | `SEMGREP_APP_TOKEN` | `sast.yml` | From [semgrep.dev](https://semgrep.dev). Without it, Semgrep runs in CI mode with no cloud features — still blocks on findings. |
 | `GITLEAKS_LICENSE` | `secrets.yml` | Only required for GitHub organization repos. Not needed for personal repos. |
 | `NVD_API_KEY` | `sca.yml` (dependency-check job) | Optional but speeds up NVD database download significantly. Get one at [nvd.nist.gov/developers/request-an-api-key](https://nvd.nist.gov/developers/request-an-api-key). |
-| `DEFECTDOJO_URL` | All workflows | Base URL of your DefectDojo instance, e.g. `https://defectdojo.example.com`. Optional — skip DefectDojo upload steps if not using it. |
-| `DEFECTDOJO_API_KEY` | All workflows | DefectDojo API v2 key. |
-| `DEFECTDOJO_ENGAGEMENT_ID` | All workflows | The engagement ID to attach findings to. |
 
 `GITHUB_TOKEN` is provided automatically by GitHub Actions — no configuration needed.
 
@@ -105,18 +120,3 @@ See the [Makefile](Makefile) for all available targets.
 
 Do not deploy this app to any environment other than local development.
 
----
-
-## Finding Management
-
-All scanner results are uploaded to [DefectDojo](https://github.com/DefectDojo/django-DefectDojo) via [`scripts/upload-to-defectdojo.sh`](scripts/upload-to-defectdojo.sh). DefectDojo deduplicates findings across scans, tracks remediation status, and provides a unified view across all tools.
-
-Supported scan types for import:
-
-| Scanner arg | DefectDojo scan type |
-|---|---|
-| `semgrep` | `SARIF` |
-| `trivy` | `Trivy Scan` |
-| `gitleaks` | `Gitleaks Scan` |
-| `dependency-check` | `Dependency Check Scan` |
-| `zap` | `ZAP Scan` |
