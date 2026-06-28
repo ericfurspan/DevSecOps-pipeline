@@ -109,7 +109,6 @@ make run
 # Run all scanners locally (requires semgrep, trivy installed)
 make sast
 make sca
-make dast
 
 # Tear down
 make stop
