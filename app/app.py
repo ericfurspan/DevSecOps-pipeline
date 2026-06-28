@@ -8,7 +8,7 @@ app = Flask(__name__)
 SECRET_API_KEY = "super-secret-key-abc123-do-not-commit"
 DB_PASSWORD = "password123"
 
-DATABASE = ":memory:"
+DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.db")
 
 
 def get_db():
@@ -18,6 +18,8 @@ def get_db():
 
 
 def init_db():
+    if os.path.exists(DATABASE):
+        os.remove(DATABASE)
     conn = get_db()
     conn.execute(
         "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, email TEXT)"
