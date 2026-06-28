@@ -32,6 +32,9 @@ for i in $(seq 1 12); do
 done
 
 echo "Running ZAP API scan..."
+# -O overrides the spec's server URL — change the port here if docker-compose.yml's mapping changes.
+# -I means "don't fail on warnings"; drop it to make WARN-NEW findings exit non-zero, matching a
+# stricter CI gate. To change which specific alerts are ignored, add "-config rules.<id>.threshold=ignore".
 docker run --rm \
   --add-host=host.docker.internal:host-gateway \
   -v "$(pwd)/app:/zap/wrk/app:ro" \

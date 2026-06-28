@@ -13,6 +13,8 @@ stop:
 	docker compose down
 
 # SAST — Semgrep (requires `pip install semgrep`)
+# Runs a reduced ruleset for speed; see .github/workflows/sast.yml for the full CI config
+# (adds p/owasp-top-ten + .semgrep/custom-rules.yml).
 sast:
 	@mkdir -p reports
 	semgrep scan \
@@ -24,6 +26,7 @@ sast:
 	@echo "SAST report: reports/semgrep.sarif"
 
 # SCA — Trivy (requires `brew install trivy` or Docker)
+# --severity here also includes MEDIUM (CI gates on HIGH,CRITICAL only) for a more thorough local look.
 sca:
 	@mkdir -p reports
 	trivy fs app/ \

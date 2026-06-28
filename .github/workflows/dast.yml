@@ -30,6 +30,11 @@ jobs:
         run: mkdir -p reports
 
       - name: Run ZAP API scan
+        # To change which alerts fail the build, pass a rules_file_name (TSV: "<rule-id>\t<threshold>"
+        # per line, e.g. "10021\tIGNORE") or add inline overrides via cmd_options (e.g. "-config
+        # rules.10021.threshold=ignore"). For a fuller crawl-based scan instead of just the API
+        # definition, swap this action for zaproxy/action-full-scan.
+        # Docs: zaproxy.org/docs/docker/api-scan/ · github.com/zaproxy/action-api-scan
         uses: zaproxy/action-api-scan@v0.7.0
         with:
           target: 'app/openapi.yaml'

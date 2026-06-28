@@ -21,6 +21,9 @@ jobs:
         run: pip install semgrep
 
       - name: Run Semgrep
+        # Add/remove "--config p/<ruleset>" lines to change registry rulesets (browse: semgrep.dev/explore).
+        # To exclude files/paths, add a .semgrepignore at the repo root (.gitignore syntax).
+        # To suppress one finding inline, comment "# nosemgrep: <rule-id>" on the offending line.
         run: |
           mkdir -p reports
           semgrep scan \
