@@ -17,7 +17,7 @@ A reference CI/CD security pipeline demonstrating automated vulnerability scanni
 | `Dockerfile` | Builds the demo app container image from `python:3.11-slim` |
 | `docker-compose.yml` | Runs the app locally; maps host port 5001 → container port 5000 |
 | `Makefile` | Local dev shortcuts (`make run`, `make sast`, etc.) — not used by CI |
-| `docs/pipeline.md` | Original pipeline notes from initial scaffold; superseded by this README |
+| [`docs/tuning.md`](docs/tuning.md) | Per-tool reference for adjusting severity gates, suppressions, and custom rules |
 
 ---
 
@@ -36,6 +36,8 @@ SAST, secret scanning, and SCA run on every push to `main` and on pull requests.
 ---
 
 ## Tools
+
+For how to adjust severity gates, suppress findings, or write custom rules for any of these, see [docs/tuning.md](docs/tuning.md).
 
 ### Semgrep (SAST)
 Static application security testing — analyzes source code without running it. Catches injection flaws, insecure patterns, and secrets embedded in code.
