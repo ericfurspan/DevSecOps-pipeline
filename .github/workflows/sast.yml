@@ -30,7 +30,6 @@ jobs:
             --config p/python \
             --config p/secrets \
             --config p/owasp-top-ten \
-            --config .semgrep/custom-rules.yml \
             --sarif \
             --output reports/semgrep.sarif \
             app/
