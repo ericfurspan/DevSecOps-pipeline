@@ -123,10 +123,10 @@ See the [Makefile](Makefile) for all available targets.
 
 [`app/app.py`](app/app.py) is intentionally vulnerable. It exists to demonstrate that each scanner fires on real findings:
 
-- **Hardcoded secrets** → triggers Semgrep `hardcoded-secret-variable` + Gitleaks
+- **Hardcoded secrets** → triggers Semgrep `hardcoded-secret-variable` + Gitleaks (`generic-api-key` rule — verified both fire; the secret values are deliberately high-entropy so Gitleaks' entropy threshold is actually met)
 - **SQL injection via f-string** → triggers Semgrep `sql-injection-fstring-execute` (static) + ZAP active scan (runtime)
 - **`debug=True`** → triggers Semgrep `flask-debug-true`
-- **`requests==2.28.0`** (CVE-2023-32681) → triggers Trivy + OWASP Dependency-Check
+- **`requests==2.28.0`** (CVE-2023-32681) → detected by Trivy + OWASP Dependency-Check, but its CVSS (6.1, MEDIUM) is below both tools' failure gate (HIGH/CRITICAL, CVSS ≥ 7.0). It shows up in scan output without failing the build — a real example of "detected" vs. "gated." The SCA jobs currently *do* fail, but because of HIGH-severity CVEs in the pinned Flask/Werkzeug versions (CVE-2023-30861, CVE-2024-34069 — see [requirements.txt](app/requirements.txt)), not because of this one.
 
 Do not deploy this app to any environment other than local development.
 

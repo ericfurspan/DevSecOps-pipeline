@@ -4,9 +4,12 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# [VULN] Hardcoded secret — intentional for SAST/secret-scanning demo
-SECRET_API_KEY = "super-secret-key-abc123-do-not-commit"
-DB_PASSWORD = "password123"
+# [VULN] Hardcoded secret — intentional for SAST/secret-scanning demo.
+# Values are random-looking (high entropy) on purpose: Gitleaks' default generic-api-key rule
+# requires both a keyword (key/secret/password/token...) AND entropy >= 3.5, so a low-entropy
+# string like "password123" alone won't actually trip it.
+SECRET_API_KEY = "x7Qp2KmT9vRz4Lc8WnB1sYd6Fg0Hj3Mu"
+DB_PASSWORD = "Tr9zMpQ2aVx5Lk8WbYc4Rf7Nj0Hs3uDg"
 
 DATABASE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.db")
 
