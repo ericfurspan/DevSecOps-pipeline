@@ -9,7 +9,6 @@ A reference CI/CD security pipeline demonstrating automated vulnerability scanni
 | `app/app.py` | The scan target — a deliberately vulnerable Flask app with SQLi, hardcoded secrets, and debug mode enabled |
 | `app/requirements.txt` | Python dependencies; `requests==2.28.0` is intentionally pinned to a vulnerable version to trigger SCA scanners |
 | `app/openapi.yaml` | OpenAPI 3.0 spec for the demo app — used by the ZAP API scan to enumerate endpoints |
-| `.semgrep/custom-rules.yml` | Three custom Semgrep rules that match the exact vulnerabilities in `app.py` |
 | `.github/workflows/sast.yml` | CI workflow: runs Semgrep SAST, uploads SARIF to GitHub Security |
 | `.github/workflows/secrets.yml` | CI workflow: runs Gitleaks across the full git history to catch secrets ever committed |
 | `.github/workflows/sca.yml` | CI workflow: runs Trivy against Python deps and the container image |
@@ -46,11 +45,6 @@ This pipeline uses three Semgrep rule sets:
 - `p/python` — Python-specific security patterns
 - `p/secrets` — Hardcoded credentials and API keys
 - `p/owasp-top-ten` — Coverage of the OWASP Top 10
-
-Plus three custom rules in [`.semgrep/custom-rules.yml`](.semgrep/custom-rules.yml):
-- `hardcoded-secret-variable` — Variables named `SECRET`, `PASSWORD`, `API_KEY`, or `TOKEN` assigned a literal string
-- `sql-injection-fstring-execute` — SQL queries built with f-strings passed to `.execute()`
-- `flask-debug-true` — `app.run(debug=True)` left in code
 
 Results are uploaded to GitHub Security (Code Scanning) as SARIF.
 
@@ -106,9 +100,9 @@ See the [Makefile](Makefile) for all available targets.
 
 [`app/app.py`](app/app.py) is intentionally vulnerable. It exists to demonstrate that each scanner fires on real findings:
 
-- **Hardcoded secrets** → triggers Semgrep `hardcoded-secret-variable` + Gitleaks (`generic-api-key` rule — verified both fire; the secret values are deliberately high-entropy so Gitleaks' entropy threshold is actually met)
-- **SQL injection via f-string** → triggers Semgrep `sql-injection-fstring-execute` (static) + ZAP active scan (runtime)
-- **`debug=True`** → triggers Semgrep `flask-debug-true`
+- **Hardcoded secrets** → triggers Semgrep (`p/secrets` ruleset) + Gitleaks (`generic-api-key` rule — the secret values are deliberately high-entropy so Gitleaks' entropy threshold is actually met)
+- **SQL injection via f-string** → triggers Semgrep (`p/python` ruleset, static) + ZAP active scan (runtime)
+- **`debug=True`** → triggers Semgrep (`p/python` ruleset)
 - **`requests==2.28.0`** (CVE-2023-32681) → detected by Trivy, but its CVSS (6.1, MEDIUM) is below the HIGH/CRITICAL gate. It shows up in scan output without failing the build — a deliberate example of "detected" vs. "gated." The SCA job currently *does* fail, but because of HIGH-severity CVEs in the pinned Flask/Werkzeug versions (CVE-2023-30861, CVE-2024-34069 — see [requirements.txt](app/requirements.txt)), not because of this one.
 
 Do not deploy this app to any environment other than local development.
