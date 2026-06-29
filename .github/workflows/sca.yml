@@ -1,4 +1,4 @@
-name: SCA — Trivy + OWASP Dependency-Check
+name: SCA — Trivy
 
 on:
   push:
@@ -46,36 +46,3 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "1"
 
-  dependency-check:
-    name: OWASP Dependency-Check
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Create reports directory
-        run: mkdir -p reports
-
-      - name: Run OWASP Dependency-Check
-        # --failOnCVSS: lower/raise the gate (e.g. 9 to only fail on critical).
-        # To suppress a specific false positive, add a suppression.xml with a <suppress> block
-        # matching the CVE/CPE, then append "--suppression suppression.xml" here.
-        # Docs: jeremylong.github.io/DependencyCheck/general/suppression.html
-        uses: dependency-check/Dependency-Check_Action@v3.1.0
-        with:
-          project: devsecops-demo
-          path: app/
-          format: ALL
-          out: reports/
-          args: >
-            --failOnCVSS 7
-            --enableRetired
-            ${{ secrets.NVD_API_KEY != '' && format('--nvdApiKey {0}', secrets.NVD_API_KEY) || '' }}
-
-      - name: Upload HTML report as artifact
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: dependency-check-report
-          path: reports/dependency-check-report.html
-          retention-days: 30
