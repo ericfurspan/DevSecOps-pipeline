@@ -22,7 +22,7 @@ make sca    # Trivy dependency scan
 make stop   # Tear down the app
 ```
 
-The CI pipeline runs automatically on every push to `main` and on pull requests — no secrets or configuration needed. DAST runs on a weekly schedule and via manual dispatch.
+The CI pipeline runs automatically on every push to `master` and on pull requests — no secrets or configuration needed. DAST runs on a weekly schedule and via manual dispatch.
 
 ---
 
@@ -47,9 +47,9 @@ The CI pipeline runs automatically on every push to `main` and on pull requests 
 
 | Workflow | Tool | What it scans | Blocks on | Trigger |
 |---|---|---|---|---|
-| `sast.yml` | Semgrep | Source code (SAST) | Any finding from configured rules | push to `main`, PRs |
-| `secrets.yml` | Gitleaks | Git history + staged changes | Any secret found in repo history | push to `main`, PRs |
-| `sca.yml` | Trivy | Python deps + Docker image | HIGH or CRITICAL CVE | push to `main`, PRs |
+| `sast.yml` | Semgrep | Source code (SAST) | Any finding from configured rules | push to `master`, PRs |
+| `secrets.yml` | Gitleaks | Git history + staged changes | Any secret found in repo history | push to `master`, PRs |
+| `sca.yml` | Trivy | Python deps + Docker image | HIGH or CRITICAL CVE | push to `master`, PRs |
 | `dast.yml` | OWASP ZAP | Running app (HTTP) | Any high-severity finding | Weekly (Sundays), manual |
 
 Each workflow file has inline comments explaining how to tune that scanner — severity gates, suppressions, and config options.

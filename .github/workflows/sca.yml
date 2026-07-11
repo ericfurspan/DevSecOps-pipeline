@@ -2,7 +2,7 @@ name: SCA — Trivy
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
 
 permissions:
@@ -45,4 +45,3 @@ jobs:
           output: reports/trivy-image.json
           severity: HIGH,CRITICAL
           exit-code: "1"
-

@@ -2,7 +2,7 @@ name: SAST — Semgrep
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
 
 permissions:
@@ -30,6 +30,7 @@ jobs:
             --config p/python \
             --config p/secrets \
             --config p/owasp-top-ten \
+            --error \
             --sarif \
             --output reports/semgrep.sarif \
             app/
