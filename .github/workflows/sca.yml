@@ -27,7 +27,7 @@ jobs:
         # To suppress a specific CVE, add a .trivyignore file at the repo root (one CVE ID per
         # line, e.g. CVE-2023-32681), or use a trivy.yaml config for more options:
         # aquasecurity.github.io/trivy/latest/docs/configuration/filtering/
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: app/
@@ -37,7 +37,7 @@ jobs:
           exit-code: "1"
 
       - name: Scan container image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         if: always()
         with:
           image-ref: devsecops-demo:${{ github.sha }}
