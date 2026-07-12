@@ -32,6 +32,8 @@ A reference CI/CD security pipeline demonstrating automated vulnerability scanni
 
 SAST, secret scanning, and SCA run on every push to `master` and on pull requests. DAST runs on a weekly schedule and on-demand via `workflow_dispatch` — it requires a live app and is too slow and environment-dependent to gate every commit.
 
+> **Expected demo result:** The Trivy job fails while the intentionally vulnerable dependency pins remain. This means the configured HIGH/CRITICAL gate detected findings; it does not mean the scanner crashed. Open the workflow run's **Summary**, then download **trivy-reports** under **Artifacts** to review the JSON findings.
+
 ---
 
 ## Tools
