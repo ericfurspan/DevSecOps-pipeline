@@ -24,13 +24,13 @@ A reference CI/CD security pipeline demonstrating automated vulnerability scanni
 
 | Workflow | Tool | What it scans | Blocks on | Trigger |
 |---|---|---|---|---|
-| `sast.yml` | Semgrep | Source code (SAST) | Any finding from configured rules | push to `main`, PRs |
-| `secrets.yml` | Gitleaks | Git history + staged changes | Any secret found in repo history | push to `main`, PRs |
-| `sca.yml` (job: trivy) | Trivy | Python deps + Docker image | HIGH or CRITICAL CVE | push to `main`, PRs |
-| `sca.yml` (job: dependency-check) | OWASP Dependency-Check | Python deps (NVD database) | CVSS score ≥ 7.0 | push to `main`, PRs |
+| `sast.yml` | Semgrep | Source code (SAST) | Any finding from configured rules | push to `master`, PRs |
+| `secrets.yml` | Gitleaks | Git history + staged changes | Any secret found in repo history | push to `master`, PRs |
+| `sca.yml` (job: trivy) | Trivy | Python deps + Docker image | HIGH or CRITICAL CVE | push to `master`, PRs |
+| `sca.yml` (job: dependency-check) | OWASP Dependency-Check | Python deps (NVD database) | CVSS score ≥ 7.0 | push to `master`, PRs |
 | `dast.yml` | OWASP ZAP | Running app (HTTP) | Any high-severity finding | Weekly (Sundays), manual |
 
-SAST, secret scanning, and SCA run on every push to `main` and on pull requests. DAST runs on a weekly schedule and on-demand via `workflow_dispatch` — it requires a live app and is too slow and environment-dependent to gate every commit.
+SAST, secret scanning, and SCA run on every push to `master` and on pull requests. DAST runs on a weekly schedule and on-demand via `workflow_dispatch` — it requires a live app and is too slow and environment-dependent to gate every commit.
 
 ---
 
@@ -129,4 +129,3 @@ See the [Makefile](Makefile) for all available targets.
 - **`requests==2.28.0`** (CVE-2023-32681) → detected by Trivy + OWASP Dependency-Check, but its CVSS (6.1, MEDIUM) is below both tools' failure gate (HIGH/CRITICAL, CVSS ≥ 7.0). It shows up in scan output without failing the build — a real example of "detected" vs. "gated." The SCA jobs currently *do* fail, but because of HIGH-severity CVEs in the pinned Flask/Werkzeug versions (CVE-2023-30861, CVE-2024-34069 — see [requirements.txt](app/requirements.txt)), not because of this one.
 
 Do not deploy this app to any environment other than local development.
-
