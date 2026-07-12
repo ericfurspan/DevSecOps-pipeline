@@ -2,7 +2,7 @@ name: SCA — Trivy + OWASP Dependency-Check
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
 
 permissions:
@@ -27,7 +27,7 @@ jobs:
         # To suppress a specific CVE, add a .trivyignore file at the repo root (one CVE ID per
         # line, e.g. CVE-2023-32681), or use a trivy.yaml config for more options:
         # aquasecurity.github.io/trivy/latest/docs/configuration/filtering/
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         with:
           scan-type: fs
           scan-ref: app/
@@ -37,7 +37,7 @@ jobs:
           exit-code: "1"
 
       - name: Scan container image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
         if: always()
         with:
           image-ref: devsecops-demo:${{ github.sha }}
@@ -45,6 +45,14 @@ jobs:
           output: reports/trivy-image.json
           severity: HIGH,CRITICAL
           exit-code: "1"
+
+      - name: Upload Trivy reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-reports
+          path: reports/trivy-*.json
+          retention-days: 30
 
   dependency-check:
     name: OWASP Dependency-Check
@@ -61,7 +69,7 @@ jobs:
         # To suppress a specific false positive, add a suppression.xml with a <suppress> block
         # matching the CVE/CPE, then append "--suppression suppression.xml" here.
         # Docs: jeremylong.github.io/DependencyCheck/general/suppression.html
-        uses: dependency-check/Dependency-Check_Action@v3.1.0
+        uses: dependency-check/Dependency-Check_Action@1e54355a8b4c8abaa8cc7d0b70aa655a3bb15a6c # main, 2025-12-10
         with:
           project: devsecops-demo
           path: app/
