@@ -46,6 +46,14 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "1"
 
+      - name: Upload Trivy reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-reports
+          path: reports/trivy-*.json
+          retention-days: 30
+
   dependency-check:
     name: OWASP Dependency-Check
     runs-on: ubuntu-latest
