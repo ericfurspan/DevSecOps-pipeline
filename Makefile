@@ -1,4 +1,4 @@
-.PHONY: build run stop sast sca dast clean
+.PHONY: build run stop sast sca clean
 
 IMAGE_NAME := devsecops-demo
 TAG        := latest
@@ -13,8 +13,7 @@ stop:
 	docker compose down
 
 # SAST — Semgrep (requires `pip install semgrep`)
-# Runs a reduced ruleset for speed; see .github/workflows/sast.yml for the full CI config
-# (adds p/owasp-top-ten + .semgrep/custom-rules.yml).
+# Runs a reduced ruleset for speed; CI also adds p/owasp-top-ten (see sast.yml).
 sast:
 	@mkdir -p reports
 	semgrep scan \
@@ -34,10 +33,6 @@ sca:
 		--output reports/trivy-fs.json \
 		--severity MEDIUM,HIGH,CRITICAL
 	@echo "SCA report: reports/trivy-fs.json"
-
-# DAST — ZAP via Docker
-dast:
-	bash scripts/run-dast-local.sh
 
 clean:
 	docker compose down --rmi local --volumes --remove-orphans
