@@ -6,5 +6,5 @@ flask==2.3.0
 # Intentionally pinned — Trivy detects CVE-2023-32681 here, but its CVSS is 6.1 (MEDIUM), below the
 # HIGH/CRITICAL workflow gate. It shows up in scan reports but
 # won't fail the build by itself — a deliberate example of "detected" vs. "gated."
-requests==2.28.0
+requests==2.33.0
 Werkzeug==2.3.0
