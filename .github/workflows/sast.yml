@@ -7,36 +7,12 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
-  semgrep:
-    name: Semgrep SAST Scan
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Semgrep
-        run: pip install semgrep
-
-      - name: Run Semgrep
-        # Add/remove "--config p/<ruleset>" lines to change registry rulesets (browse: semgrep.dev/explore).
-        # To exclude files/paths, add a .semgrepignore at the repo root (.gitignore syntax).
-        # To suppress one finding inline, comment "# nosemgrep: <rule-id>" on the offending line.
-        run: |
-          mkdir -p reports
-          semgrep scan \
-            --config p/python \
-            --config p/secrets \
-            --config p/owasp-top-ten \
-            --error \
-            --sarif \
-            --output reports/semgrep.sarif \
-            app/
-
-      - name: Upload SARIF to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
-        with:
-          sarif_file: reports/semgrep.sarif
+  vulnerable-fixture:
+    name: Verify expected Flask findings
+    uses: ./.github/workflows/reusable-semgrep.yml
+    with:
+      target: app
+      mode: fixture
+      expected_findings: .semgrep/expected-vulnerable.json
