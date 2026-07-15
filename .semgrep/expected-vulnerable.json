@@ -1,0 +1,27 @@
+[
+  {
+    "rule_id": "devsecops.flask.debug-enabled",
+    "path": "app/app.py",
+    "start_line": 69
+  },
+  {
+    "rule_id": "devsecops.flask.wildcard-host",
+    "path": "app/app.py",
+    "start_line": 69
+  },
+  {
+    "rule_id": "devsecops.python.hardcoded-secret",
+    "path": "app/app.py",
+    "start_line": 11
+  },
+  {
+    "rule_id": "devsecops.python.hardcoded-secret",
+    "path": "app/app.py",
+    "start_line": 12
+  },
+  {
+    "rule_id": "devsecops.python.sql-injection-fstring-execute",
+    "path": "app/app.py",
+    "start_line": 47
+  }
+]

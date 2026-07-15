@@ -1,0 +1,116 @@
+name: Reusable Semgrep scan
+
+on:
+  workflow_call:
+    inputs:
+      source_ref:
+        description: Commit, branch, or tag to scan; defaults to the triggering commit
+        required: false
+        default: ""
+        type: string
+      target:
+        description: Repository-relative path to scan
+        required: false
+        default: .
+        type: string
+      policy:
+        description: Policy path in the triggering commit
+        required: false
+        default: .semgrep/policy.yml
+        type: string
+      mode:
+        description: protect fails on findings; fixture requires an exact expected set
+        required: false
+        default: protect
+        type: string
+      expected_findings:
+        description: Expected-findings JSON path for fixture mode
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      # Keep current policy separate from historical source tags.
+      - name: Check out policy
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ github.sha }}
+          path: policy
+          persist-credentials: false
+
+      - name: Check out source
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          ref: ${{ inputs.source_ref || github.sha }}
+          path: source
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned Semgrep
+        run: python -m pip install --disable-pip-version-check semgrep==1.161.0
+
+      - name: Scan and check result
+        env:
+          MODE: ${{ inputs.mode }}
+          TARGET: ${{ inputs.target }}
+          POLICY: ${{ inputs.policy }}
+          EXPECTED: ${{ inputs.expected_findings }}
+        run: |
+          set -euo pipefail
+
+          case "$MODE" in
+            protect) [[ -z "$EXPECTED" ]] || { echo "protect mode does not use expected findings" >&2; exit 2; } ;;
+            fixture) [[ -n "$EXPECTED" ]] || { echo "fixture mode requires expected findings" >&2; exit 2; } ;;
+            *) echo "mode must be protect or fixture" >&2; exit 2 ;;
+          esac
+
+          raw="$RUNNER_TEMP/semgrep-raw.json"
+          actual="$RUNNER_TEMP/semgrep-findings.json"
+
+          cd "$GITHUB_WORKSPACE/source"
+          semgrep scan \
+            --config "$GITHUB_WORKSPACE/policy/$POLICY" \
+            --metrics off \
+            --disable-version-check \
+            --no-rewrite-rule-ids \
+            --json \
+            --output "$raw" \
+            "$TARGET"
+
+          jq '[.results[] | {
+            rule_id: .check_id,
+            path: .path,
+            start_line: .start.line
+          }] | sort_by(.rule_id, .path, .start_line)' "$raw" >"$actual"
+
+          echo "Semgrep findings: $(jq length "$actual")"
+          jq . "$actual"
+
+          if [[ "$MODE" == "protect" ]]; then
+            jq -e 'length == 0' "$actual" >/dev/null || {
+              echo "Protection scan found policy violations." >&2
+              exit 10
+            }
+          else
+            expected="$GITHUB_WORKSPACE/policy/$EXPECTED"
+            jq '[.[] | {
+              rule_id: .rule_id,
+              path: .path,
+              start_line: .start_line
+            }] | sort_by(.rule_id, .path, .start_line)' "$expected" >"$RUNNER_TEMP/semgrep-expected.json"
+            cmp -s "$actual" "$RUNNER_TEMP/semgrep-expected.json" || {
+              echo "Fixture findings changed:" >&2
+              diff -u "$RUNNER_TEMP/semgrep-expected.json" "$actual" || true
+              exit 11
+            }
+          fi

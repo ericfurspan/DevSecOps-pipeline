@@ -1,0 +1,47 @@
+rules:
+  - id: devsecops.python.hardcoded-secret
+    message: A credential-shaped variable is assigned a long string literal.
+    severity: ERROR
+    languages: [python]
+    patterns:
+      - pattern: $NAME = $VALUE
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: (?i).*(secret|password|api[_-]?key|token).*
+      - metavariable-regex:
+          metavariable: $VALUE
+          regex: ^["'][^"']{20,}["']$
+    metadata:
+      category: security
+      confidence: HIGH
+      provenance: DevSecOps-pipeline
+
+  - id: devsecops.python.sql-injection-fstring-execute
+    message: A formatted string is passed directly to a database execute call.
+    severity: ERROR
+    languages: [python]
+    pattern: $CONNECTION.execute(f"...", ...)
+    metadata:
+      category: security
+      confidence: HIGH
+      provenance: DevSecOps-pipeline
+
+  - id: devsecops.flask.debug-enabled
+    message: Flask debug mode is enabled.
+    severity: WARNING
+    languages: [python]
+    pattern: $APP.run(..., debug=True, ...)
+    metadata:
+      category: security
+      confidence: HIGH
+      provenance: DevSecOps-pipeline
+
+  - id: devsecops.flask.wildcard-host
+    message: Flask binds to all interfaces.
+    severity: WARNING
+    languages: [python]
+    pattern: $APP.run(..., host="0.0.0.0", ...)
+    metadata:
+      category: security
+      confidence: HIGH
+      provenance: DevSecOps-pipeline
