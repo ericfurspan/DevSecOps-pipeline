@@ -14,7 +14,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+        with:
+          persist-credentials: false
 
       - name: Create reports directory
         run: mkdir -p reports
@@ -34,7 +36,8 @@ jobs:
           format: json
           output: reports/trivy-fs.json
           severity: HIGH,CRITICAL
-          exit-code: "1"
+          # Findings are expected in this deliberately vulnerable fixture.
+          exit-code: "0"
 
       - name: Scan container image
         uses: aquasecurity/trivy-action@a9c7b0f06e461e9d4b4d1711f154ee024b8d7ab8 # v0.36.0
@@ -44,11 +47,26 @@ jobs:
           format: json
           output: reports/trivy-image.json
           severity: HIGH,CRITICAL
-          exit-code: "1"
+          exit-code: "0"
+
+      - name: Verify expected demo findings
+        if: always()
+        run: |
+          set -euo pipefail
+          for report in reports/trivy-fs.json reports/trivy-image.json; do
+            test -s "$report"
+            count="$(jq '[.Results[]?.Vulnerabilities[]? |
+              select(.Severity == "HIGH" or .Severity == "CRITICAL")] | length' "$report")"
+            if [[ "$count" -lt 1 ]]; then
+              echo "Expected at least one HIGH or CRITICAL finding in $report" >&2
+              exit 1
+            fi
+            echo "$report: $count expected HIGH/CRITICAL findings"
+          done
 
       - name: Upload Trivy reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: trivy-reports
           path: reports/trivy-*.json
