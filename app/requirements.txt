@@ -1,8 +1,8 @@
-# flask==2.3.0 and Werkzeug==2.3.0 carry their own HIGH-severity CVEs (CVE-2023-30861, CVE-2024-34069
+# flask==3.1.3 and Werkzeug==2.3.0 carry their own HIGH-severity CVEs (CVE-2023-30861, CVE-2024-34069
 # — both CVSS 7.5) and are what currently fails the Trivy severity gate; that's an
 # incidental side effect of the pin, not a deliberate choice, but it's worth knowing if the gate
 # trips and the failure doesn't look like it's about `requests`.
-flask==2.3.0
+flask==3.1.3
 # Intentionally pinned — Trivy detects CVE-2023-32681 here, but its CVSS is 6.1 (MEDIUM), below the
 # HIGH/CRITICAL workflow gate. It shows up in scan reports but
 # won't fail the build by itself — a deliberate example of "detected" vs. "gated."
