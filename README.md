@@ -75,7 +75,7 @@ flowchart LR
 | `sast.yml` | Semgrep | Vulnerable Flask fixture | Missing/extra findings or scanner failure | push to `master`, PRs |
 | `secrets.yml` | Gitleaks | Commits introduced by the event | Any newly committed secret | push to `master`, PRs |
 | `sca.yml` | Trivy | Python deps + Docker image | Scanner failure or missing expected demo findings | push to `master`, PRs |
-| `dast.yml` | OWASP ZAP | Running app (HTTP) | Scan or action errors only; alerts are reported, not gated (`fail_action` is left at its default, `false`) | Weekly (Sundays), manual |
+| `dast.yml` | OWASP ZAP | Running app (HTTP) | Scan errors; when alerts are found, the action's default issue write also fails under this workflow's read-only token (`fail_action` is left at its default, `false`) | Weekly (Sundays), manual |
 
 Semgrep policy changes are reviewed as vendored rules rather than caller-selected thresholds or moving registry aliases.
 
