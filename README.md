@@ -47,12 +47,35 @@ The CI pipeline runs automatically on every push to `master` and on pull request
 
 ## Pipeline Overview
 
+```mermaid
+flowchart LR
+    pushpr["Push to master or pull request"]
+    weekly["Weekly schedule or manual dispatch"]
+    semgrep["Semgrep (sast.yml)"]
+    gitleaks["Gitleaks (secrets.yml)"]
+    trivy["Trivy (sca.yml)"]
+    zap["OWASP ZAP (dast.yml)"]
+    src["app/ source"]
+    commits["Commits in the event"]
+    deps["Python deps and Docker image"]
+    running["App started with Docker Compose"]
+
+    pushpr --> semgrep
+    pushpr --> gitleaks
+    pushpr --> trivy
+    weekly --> zap
+    semgrep -->|scans| src
+    gitleaks -->|scans| commits
+    trivy -->|scans| deps
+    zap -->|"starts, then scans over HTTP"| running
+```
+
 | Workflow | Tool | What it scans | Blocks on | Trigger |
 |---|---|---|---|---|
 | `sast.yml` | Semgrep | Vulnerable Flask fixture | Missing/extra findings or scanner failure | push to `master`, PRs |
 | `secrets.yml` | Gitleaks | Commits introduced by the event | Any newly committed secret | push to `master`, PRs |
 | `sca.yml` | Trivy | Python deps + Docker image | Scanner failure or missing expected demo findings | push to `master`, PRs |
-| `dast.yml` | OWASP ZAP | Running app (HTTP) | Any high-severity finding | Weekly (Sundays), manual |
+| `dast.yml` | OWASP ZAP | Running app (HTTP) | Scan errors; when alerts are found, the action's default issue write also fails under this workflow's read-only token (`fail_action` is left at its default, `false`) | Weekly (Sundays), manual |
 
 Semgrep policy changes are reviewed as vendored rules rather than caller-selected thresholds or moving registry aliases.
 
@@ -67,6 +90,6 @@ Semgrep policy changes are reviewed as vendored rules rather than caller-selecte
 - **Hardcoded demo values** → trigger the vendored Semgrep `devsecops.python.hardcoded-secret` rule. Gitleaks separately protects new commits from newly introduced secrets.
 - **SQL injection via f-string** → triggers the vendored Semgrep SQL-injection rule + ZAP active scan (runtime)
 - **`debug=True` and wildcard binding** → trigger separate vendored Semgrep Flask rules
-- **`requests==2.28.0`** (CVE-2023-32681) → detected by Trivy, but its CVSS (6.1, MEDIUM) is below the HIGH/CRITICAL gate. It shows up in scan output without failing the build — a deliberate example of "detected" vs. "gated." The SCA job currently *does* fail, but because of HIGH-severity CVEs in the pinned Flask/Werkzeug versions (CVE-2023-30861, CVE-2024-34069 — see [requirements.txt](app/requirements.txt)), not because of this one.
+- **`requests==2.28.0`** (CVE-2023-32681) → detected by Trivy, but its CVSS (6.1, MEDIUM) is below the HIGH/CRITICAL gate. It shows up in `make sca` output, which includes MEDIUM; CI scans only HIGH and CRITICAL, so it never fails the build — a deliberate example of "detected" vs. "gated." The SCA check passes because the pinned Flask/Werkzeug versions carry HIGH-severity CVEs (CVE-2023-30861, CVE-2024-34069; see [requirements.txt](app/requirements.txt)); this MEDIUM CVE does not count toward it.
 
 Do not deploy this app to any environment other than local development.
